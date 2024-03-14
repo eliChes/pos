@@ -1,0 +1,576 @@
+import React, {useEffect, useState} from 'react';
+import '../../assets/global/style.css';
+import '../styles/react-style.css';
+import { Link } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css'
+import Modal from "react-bootstrap/Modal";
+import Button from "react-bootstrap/Button";
+import Form from "react-bootstrap/Form";
+import swal from "sweetalert";
+import axios from "axios";
+import BASE_URL from "../../assets/global/url";
+import { HiArchiveBoxXMark } from "react-icons/hi2";
+
+
+import {
+    MagnifyingGlass,
+    Gear, 
+    Bell,
+    UserCircle,
+    Plus,
+    Trash,
+    NotePencil,
+    DotsThreeCircle
+  } from "@phosphor-icons/react";
+import { color } from '@mui/system';
+
+function ProductCategoryManagement() {
+    const [ProductCategory, setProductCategory] = useState([]);
+    const [show, setShow] = useState(false);
+
+    const handleClose = () => setShow(false);
+    const handleUpdateClose = () => setUpdateModalShow(false);
+    const handleShow = () => setShow(true);
+    const [updateModalShow, setUpdateModalShow] = useState(false);
+
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [openDropdownIndex, setOpenDropdownIndex] = useState(null);
+    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+    const [rotatedIcons, setRotatedIcons] = useState(
+        Array(ProductCategory.length).fill(false)
+      );
+    const [validated, setValidated] = useState(false);
+
+    const [updateFormData, setUpdateFormData] = useState({
+        productCategoryId: "",
+        name: "",
+        tax_information: "",
+        description: "",
+      });
+
+    const toggleDropdown = (event, index) => {
+        // Check if the clicked icon is already open, close it
+        if (index === openDropdownIndex) {
+          setRotatedIcons((prevRotatedIcons) => {
+            const newRotatedIcons = [...prevRotatedIcons];
+            newRotatedIcons[index] = !newRotatedIcons[index];
+            return newRotatedIcons;
+          });
+          setShowDropdown(false);
+          setOpenDropdownIndex(null);
+        } else {
+          // If a different icon is clicked, close the currently open dropdown and open the new one
+        //   setRotatedIcons(Array(Manufacturer.length).fill(false));
+          const iconPosition = event.currentTarget.getBoundingClientRect();
+          setDropdownPosition({
+            top: iconPosition.bottom + window.scrollY,
+            left: iconPosition.left + window.scrollX,
+          });
+          setRotatedIcons((prevRotatedIcons) => {
+            const newRotatedIcons = [...prevRotatedIcons];
+            newRotatedIcons[index] = true;
+            return newRotatedIcons;
+          });
+          setShowDropdown(true);
+          setOpenDropdownIndex(index);
+        }
+      };
+
+      const [name, setName] = useState();
+      const [tax_information, setTaxInformation] = useState();
+      const [description, setDescription] = useState();
+
+//--------------------------------Reload Table---------------------------------//
+      const reloadTable = () => {
+        axios
+          .get(BASE_URL + '/productCategory/getProductCategory')
+          .then((res) => {
+            setProductCategory(res.data);
+          })
+          .catch((err) => console.log(err));
+      };
+//--------------------------------End Reload Table---------------------------------//     
+
+//--------------------------------Product Category list fetch---------------------------------//
+useEffect(() => {
+    axios
+      .get(BASE_URL + "/productCategory/getProductCategory")
+      .then((res) => setProductCategory(res.data))
+      .catch((err) => console.log(err));
+  }, []);
+//--------------------------------End Product Category list fetch---------------------------------//
+
+//--------------------------------Valdidations---------------------------------//
+const SuccessInserted = (res) => {
+    swal({
+      title: "Created New Product Category",
+      text: "The Product Category has been added successfully",
+      icon: "success",
+      button: "OK",
+    }).then(() => {
+      const newId = res.data.product_category_id;
+      // console.log(newId)
+      setProductCategory((prev) => [
+        ...prev,
+        {
+          product_category_id: newId,
+          name: res.data.name,
+          tax_information: res.data.tax_information,
+          description: res.data.description,
+          createdAt: res.data.createdAt,
+          updatedAt: res.data.updatedAt,
+        },
+      ]);
+
+      setName(""); 
+      setTaxInformation("");
+      setDescription("");
+
+      setShow(false);
+      reloadTable();
+    });
+  };
+  const Duplicate_Message = () => {
+    swal({
+      title: "Product Category Name Already Exist",
+      text: "Try other Product Category name",
+      icon: "error",
+      button: "OK",
+    });
+  };
+
+  const ErrorInserted = () => {
+    swal({
+      title: "Something went wrong",
+      text: "Please Contact our Support",
+      icon: "error",
+      button: "OK",
+    });
+  };
+
+  const handleUpdateFormChange = (e) => {
+    const { name, value } = e.target;
+    setUpdateFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+//--------------------------------End of Validations---------------------------------//
+
+//--------------------------------Show Modal Update---------------------------------//
+const handleModalToggle = (updateData = null) => {
+    setUpdateModalShow(!updateModalShow);
+    if (updateData) {
+      setUpdateFormData({
+        productCategoryId: updateData.product_category_id,
+        name: updateData.name,
+        tax_information: updateData.tax_information,
+        description: updateData.description,
+      });
+    } else {
+      setUpdateFormData({
+        productCategoryId: "",
+        name: "",
+        description: "",
+        tax_information: "",
+      });
+    }
+  };
+//--------------------------------End Show Modal Update---------------------------------//
+
+//--------------------------------Add Product Category---------------------------------//
+const addProductCategory = async (e) => {
+    e.preventDefault();
+
+    const form = e.currentTarget;
+    if (form.checkValidity() === false) {
+      e.preventDefault();
+      e.stopPropagation();
+      swal({
+        icon: "error",
+        title: "Fields are required",
+        text: "Please fill the red text fields",
+      });
+    } else {
+      axios
+        .post(`${BASE_URL}/productCategory/create`, {
+          name: name,
+          tax_information: tax_information,
+          description: description,
+        })
+        .then((res) => {
+          console.log(res);
+          if (res.status === 200) {
+            SuccessInserted(res);
+          } else if (res.status === 201) {
+            Duplicate_Message();
+          } else {
+            ErrorInserted();
+          }
+        });
+    }
+    setValidated(true); //for validations
+  };
+//--------------------------------End Product Category---------------------------------//
+
+//--------------------------------Update Product Category---------------------------------//
+const updateProductCategory = async (e) => {
+    e.preventDefault();
+
+    if (!updateFormData.name) {
+      swal({
+        icon: "error",
+        title: "Name is required",
+        text: "Please enter a name before updating.",
+      });
+      return;
+    }
+
+    try {
+      const productCategoryId = updateFormData.productCategoryId;
+      const response = await axios.put(
+        BASE_URL + `/productCategory/update/${productCategoryId}`,
+        {
+            name: updateFormData.name,
+            tax_information: updateFormData.tax_information,
+            description: updateFormData.description,
+        }
+      );
+
+      if (response.status === 200) {
+        swal({
+          title: "Update successful!",
+          text: "The Product Category has been updated successfully.",
+          icon: "success",
+          button: "OK",
+        }).then(() => {
+          handleModalToggle();
+          setProductCategory((prev) =>
+            prev.map((data) =>
+              data.product_category_id === updateFormData.product_category_id
+                ? {
+                    ...data,
+                    name: updateFormData.name,
+                    tax_information: updateFormData.tax_information,
+                    description: updateFormData.description,
+                  }
+                : data
+            )
+          );
+          reloadTable();
+          setUpdateFormData({
+            name: "",
+            tax_information: "",
+            description: "",
+          });
+
+        });
+      } else if (response.status === 202) {
+        swal({
+          icon: "error",
+          title: "Product Category has been already exists",
+          text: "Please input another Product Category Name",
+        });
+      } else {
+        swal({
+          icon: "error",
+          title: "Something went wrong",
+          text: "Please contact our support",
+        });
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+//--------------------------------End Update Product Category---------------------------------//
+
+//--------------------------------Delete Product Category---------------------------------//
+const handleDelete = async (productCategoryId) => {
+  swal({
+    title: "Are you sure?",
+    text: "Once deleted, you will not be able to recover this record file!",
+    icon: "warning",
+    buttons: true,
+    dangerMode: true,
+  }).then(async (willDelete) => {
+    if (willDelete) {
+      try {
+        const response = await axios.delete(
+          BASE_URL + `/productCategory/delete/${productCategoryId}`
+        );
+
+        if (response.status === 200) {
+          swal({
+            title: "Deleted Successful!",
+            text: "The Product Category has been Deleted Successfully.",
+            icon: "success",
+            button: "OK",
+          }).then(() => {
+            setProductCategory((prev) => prev.filter((data) => data.id !== productCategoryId));
+            setUpdateModalShow(false);
+            reloadTable();
+          });
+        } else if (response.status === 202) {
+          swal({
+            icon: "error",
+            title: "Delete Prohibited",
+            text: "You cannot delete Product Category that is used",
+          });
+        } else {
+          swal({
+            icon: "error",
+            title: "Something went wrong",
+            text: "Please contact our support",
+          });
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    } else {
+      swal({
+        title: "Cancelled",
+        text: "Product Category not Deleted!",
+        icon: "warning",
+      });
+    }
+  });
+};
+//--------------------------------End Delete Product Category---------------------------------//
+
+
+//--------------------------------Date Format---------------------------------//
+    function formatDate(isoDate) {
+    const date = new Date(isoDate);
+    return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(
+        date.getDate()
+    )} ${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(
+        date.getSeconds()
+    )}`;
+    }
+
+    function padZero(num) {
+    return num.toString().padStart(2, "0");
+    }
+//--------------------------------End Date Format---------------------------------//
+  return (
+    <div className="main-of-containers">
+        <div className="right-of-main-containers">
+            <div className="right-body-contents">
+                <div className="Employeetext-button">
+                    <div className="employee-and-button">
+                        <div className="emp-text-side">
+                            <p>Category</p>
+                        </div>
+
+                        <div className="button-create-side">
+                        <div className="Buttonmodal-new">
+                        <button onClick={handleShow}>
+                            <span style={{}}>
+                            <Plus size={15} />
+                            </span>
+                            Add  New
+                        </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div className="table-containss">
+                    <div className="main-of-all-tables">
+                        <table className='table-hover' id='order-listing'>
+                                <thead>
+                                <tr>
+                                    <th className='tableh'>ID</th>
+                                    <th className='tableh'>Name</th>
+                                    <th className='tableh'>Tax Information</th>
+                                    <th className='tableh'>Date Created</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {ProductCategory.map((data, i) => (
+                                    <tr key={i}>
+                                    <td onClick={() => handleModalToggle(data)}>{data.product_category_id}</td>
+                                    <td onClick={() => handleModalToggle(data)}>{data.name}</td>
+                                    <td onClick={() => handleModalToggle(data)}>{data.tax_information}</td>
+                                    <td onClick={() => handleModalToggle(data)}>{formatDate(data.createdAt)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+{/* ----------------------------------MODAL FOR CREATE---------------------------------------------------- */}
+        <Modal
+        show={show}
+        onHide={handleClose}
+        backdrop="static"
+        keyboard={false}
+        size="md">
+        <Form
+          noValidate
+          validated={validated}
+          onSubmit={addProductCategory}>
+          <Modal.Header closeButton>
+            <Modal.Title style={{ fontSize: "24px" }}>
+              Add New Category
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+                <Form.Group
+                  className="mb-3"
+                  controlId="exampleForm.ControlInput1">
+                  <Form.Label style={{ fontSize: "18px" }}>Name: </Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder=""
+                    required
+                    onChange={(e) => setName(e.target.value)}
+                    style={{ height: "40px", fontSize: "15px" }}
+                  />
+                </Form.Group>
+
+                <Form.Group
+                  className="mb-3"
+                  controlId="exampleForm.ControlInput1">
+                  <Form.Label style={{ fontSize: "18px" }}>Tax Information: </Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder=""
+                    required
+                    onChange={(e) => setTaxInformation(e.target.value)}
+                    style={{ height: "40px", fontSize: "15px" }}
+                  />
+                </Form.Group>
+
+                <Form.Group
+                  className="mb-3"
+                  controlId="exampleForm.ControlInput1">
+                  <Form.Label style={{ fontSize: "18px" }}>Description: </Form.Label>
+                  <Form.Control
+                    type="textarea"
+                    as="textarea" rows={3}
+                    placeholder=""
+                    required
+                    onChange={(e) => setDescription(e.target.value)}
+                    style={{ fontSize: "15px" }}
+                  />
+                </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              type="submit"
+              variant="success"
+              size="md"
+              style={{ fontSize: "20px" }}>
+              Save
+            </Button>
+            <Button
+              variant="outline-primary"
+              size="md"
+              style={{ fontSize: "20px" }}
+              onClick={handleClose}>
+              Cancel
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+      {/* ---------------------------------- END MODAL FOR CREATE---------------------------------------------------- */}
+
+      {/* ---------------------------------- MODAL FOR UPDATE---------------------------------------------------- */}
+      <Modal
+        show={updateModalShow}
+        onHide={() => handleModalToggle()}
+        backdrop="static"
+        keyboard={false}
+        size="md">
+        <Form
+          noValidate
+          validated={validated}
+          onSubmit={updateProductCategory}>
+          <Modal.Header closeButton>
+            <Modal.Title style={{ fontSize: "24px" }}>
+              Update Product Category 
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+                <Form.Group
+                  className="mb-3"
+                  controlId="exampleForm.ControlInput1">
+                  <Form.Label style={{ fontSize: "18px" }}>Name: </Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder=""
+                    name="name"
+                    required
+                    value={updateFormData.name}
+                    onChange={handleUpdateFormChange}
+                    style={{ height: "40px", fontSize: "15px" }}
+                  />
+                </Form.Group>
+
+                <Form.Group
+                  className="mb-3"
+                  controlId="exampleForm.ControlInput1">
+                  <Form.Label style={{ fontSize: "18px" }}>Tax Information: </Form.Label>
+                  <Form.Control
+                    type="text"
+                    required
+                    name="tax_information"
+                    onChange={handleUpdateFormChange}
+                    value={updateFormData.tax_information}
+                    style={{ height: "40px", fontSize: "15px" }}
+                  />
+                </Form.Group>     
+
+                <Form.Group
+                  className="mb-3"
+                  controlId="exampleForm.ControlInput1">
+                  <Form.Label style={{ fontSize: "18px" }}>Description:</Form.Label>
+                  <Form.Control
+                    type="textarea"
+                    required
+                    name="description"
+                    as="textarea" rows={3}
+                    onChange={handleUpdateFormChange}
+                    value={updateFormData.description}
+                    style={{fontSize: "15px" }}
+                  />
+                </Form.Group>                             
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              type="submit"
+              variant="success"
+              size="md"
+              style={{ fontSize: "20px" }}>
+              Save
+            </Button>
+            <Button
+              variant="outline-primary"
+              size="md"
+              style={{ fontSize: "20px" }}
+              onClick={handleUpdateClose}>
+              Cancel
+            </Button>
+            <Button
+              variant="outline-primary"
+              size="md"
+              style={{ fontSize: "20px"}}
+              onClick={() => handleDelete(updateFormData.productCategoryId)}>
+              Delete
+            </Button>
+            
+          </Modal.Footer>
+        </Form>
+      </Modal>
+      {/* ---------------------------------- END MODAL FOR UPDATE---------------------------------------------------- */}
+    </div>
+
+    
+  )
+}
+
+export default ProductCategoryManagement

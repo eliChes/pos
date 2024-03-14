@@ -1,0 +1,120 @@
+.menu-container {
+  background: #e2f5ff;
+}
+.time-container {
+  display: flex;
+  justify-content: end;
+}
+.t {
+  flex: 1;
+}
+.buttons-container i {
+  color: white;
+}
+.time {
+  font-size: 2.5rem;
+  text-align: end;
+  padding-right: 3rem;
+  padding-top: 3rem;
+}
+.menus button {
+  background-color: #03396c;
+  color: white;
+  width: 35rem;
+  height: 10rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
+}
+.menus button:hover {
+  background-color: #145897;
+}
+.logout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+.logout:hover p,
+.logout:hover i {
+  color: red;
+}
+.logout i {
+  font-size: 2.5rem;
+  color: black;
+}
+.btn-details h2,
+.btn-details p {
+  margin: 0;
+}
+.desc {
+  font-size: 12px;
+  text-align: start;
+}
+.menus {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 20px;
+}
+.menus i {
+  font-size: 5rem;
+}
+.btn-details {
+  width: 75%;
+  padding-left: 1rem;
+}
+.btn-details h2 {
+  font-size: 3rem;
+  text-align: start;
+}
+.btn-details p {
+  color: white;
+}
+.buttons-container {
+  display: grid;
+  align-items: center;
+  justify-content: center;
+}
+.title-menu {
+  font-weight: 700;
+  font-size: 8rem;
+  padding-left: 8rem;
+}
+.sentence {
+  display: grid;
+  justify-content: center;
+  margin: 1rem;
+}
+.sentence p {
+  font-size: 1.8em;
+  color: black;
+}
+
+.blue {
+  color: #025692;
+}
+.of {
+  color: #d89f65;
+}
+.sale {
+  color: #4a5c2f;
+}
+.footer {
+  display: flex;
+  padding: 0 2rem;
+  background: #e2f5ff;
+  border-top: none;
+}
+.logout {
+  position: relative;
+  bottom: 2rem;
+}
+.footer p {
+  color: black;
+  font-size: 2rem;
+}
+
+.version {
+  flex: 1;
+}
